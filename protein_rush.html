@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YoPRO Protein Rush</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --yopro-green: #1D9E75;
+            --yopro-dark: #0D1B14;
+            --yopro-amber: #EF9F27;
+            --yopro-red: #E74C3C;
+            --bg-color: #0D1B14;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: var(--bg-color);
+            font-family: 'DM Sans', sans-serif;
+            color: white;
+            user-select: none;
+            touch-action: manipulation;
+        }
+
+        #game-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        canvas {
+            display: block;
+            background: radial-gradient(circle at center, #162a1f 0%, #0d1b14 100%);
+            box-shadow: 0 0 50px rgba(0,0,0,0.5);
+        }
+
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .hud-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            width: 100%;
+        }
+
+        .protein-container {
+            width: 300px;
+        }
+
+        .label {
+            font-family: 'Bebas Neue', cursive;
+            font-size: 24px;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .bar-bg {
+            width: 100%;
+            height: 25px;
+            background: rgba(255,255,255,0.1);
+            border: 2px solid rgba(255,255,255,0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        #protein-bar {
+            height: 100%;
+            width: 60%;
+            background: linear-gradient(90deg, var(--yopro-green), #2ecc71);
+            transition: width 0.3s ease, background 0.3s ease;
+            box-shadow: 0 0 15px rgba(29, 158, 117, 0.5);
+        }
+
+        .bar-warning {
+            background: linear-gradient(90deg, var(--yopro-red), #ff7675) !important;
+            box-shadow: 0 0 15px rgba(231, 76, 60, 0.5) !important;
+        }
+
+        .score-container {
+            text-align: right;
+        }
+
+        .score-value {
+            font-family: 'Bebas Neue', cursive;
+            font-size: 48px;
+            line-height: 1;
+        }
+
+        .best-score {
+            font-size: 16px;
+            opacity: 0.7;
+            text-transform: uppercase;
+        }
+
+        #overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            pointer-events: all;
+            z-index: 100;
+        }
+
+        h1 {
+            font-family: 'Bebas Neue', cursive;
+            font-size: 80px;
+            color: var(--yopro-green);
+            margin: 0;
+            text-shadow: 0 0 20px rgba(29, 158, 117, 0.3);
+        }
+
+        .subtitle {
+            font-size: 20px;
+            margin-bottom: 40px;
+            opacity: 0.8;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .btn {
+            background: var(--yopro-green);
+            color: white;
+            font-family: 'Bebas Neue', cursive;
+            font-size: 32px;
+            padding: 15px 50px;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.2s, background 0.2s;
+            letter-spacing: 1px;
+        }
+
+        .btn:hover {
+            background: #25c08f;
+            transform: scale(1.05);
+        }
+
+        .instructions {
+            margin-top: 30px;
+            font-size: 14px;
+            opacity: 0.6;
+            text-align: center;
+        }
+
+        #streak-popup {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: 'Bebas Neue', cursive;
+            font-size: 60px;
+            color: var(--yopro-amber);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s, transform 0.5s ease-out;
+            text-shadow: 0 0 20px rgba(239, 159, 39, 0.5);
+        }
+
+        .show-streak {
+            opacity: 1 !important;
+            transform: translate(-50%, -80%) !important;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="gameCanvas"></canvas>
+        <div id="ui-layer">
+            <div class="hud-top">
+                <div class="protein-container">
+                    <div class="label">
+                        <span>Protein Level</span>
+                        <span id="protein-text">60%</span>
+                    </div>
+                    <div class="bar-bg">
+                        <div id="protein-bar"></div>
+                    </div>
+                </div>
+                <div class="score-container">
+                    <div class="best-score">Best: <span id="best-val">0</span></div>
+                    <div class="score-value" id="score-val">0</div>
+                </div>
+            </div>
+            <div id="streak-popup">PROTEIN STREAK!</div>
+        </div>
+
+        <div id="overlay">
+            <h1>PROTEIN RUSH</h1>
+            <div class="subtitle">Fueled by YoPRO Delice</div>
+            <button class="btn" id="start-btn">START RUN</button>
+            <div class="instructions">
+                SPACE or TAP to JUMP<br>
+                Double Jump allowed<br>
+                Collect YoPRO Bottles (+24g) • Avoid Junk Food (-22g)
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const startBtn = document.getElementById('start-btn');
+        const overlay = document.getElementById('overlay');
+        const scoreVal = document.getElementById('score-val');
+        const bestVal = document.getElementById('best-val');
+        const proteinBar = document.getElementById('protein-bar');
+        const proteinText = document.getElementById('protein-text');
+        const streakPopup = document.getElementById('streak-popup');
+
+        // Configuration
+        const CONFIG = {
+            gravity: 0.6,
+            jumpForce: -12,
+            baseSpeed: 5,
+            speedIncrease: 0.0005,
+            maxSpeed: 12,
+            bottleValue: 24,
+            damageValue: 22,
+            drainRate: 0.05,
+            flavors: [
+                { name: 'Nature', color: '#3498db', band: '#00D2FF' }, // Electric Blue
+                { name: 'Chocolat', color: '#795548', band: '#EF9F27' }, // Deep Brown / Gold
+                { name: 'Café Caramel', color: '#5D4037', band: '#EF9F27' }, // Dark Brown / Amber Gold
+                { name: 'Fraise Framboise', color: '#C0392B', band: '#FF4D6D' }, // Red / Pink
+                { name: 'Vanille Biscuit', color: '#D4AF37', band: '#F5DEB3' } // Gold / Beige
+            ],
+            junkItems: ['🍔', '🍟', '🍕', '🥤']
+        };
+
+        let gameState = {
+            running: false,
+            score: 0,
+            bestScore: localStorage.getItem('yopro_best_score') || 0,
+            protein: 60,
+            speed: CONFIG.baseSpeed,
+            distance: 0,
+            lastStreakScore: 0
+        };
+
+        bestVal.textContent = gameState.bestScore;
+
+        // Assets
+        const assets = {
+            player: null,
+            bottles: {},
+            obstacles: []
+        };
+
+        class Player {
+            constructor() {
+                this.width = 60;
+                this.height = 90;
+                this.x = 100;
+                this.y = canvas.height - 150;
+                this.vy = 0;
+                this.jumps = 0;
+                this.rotation = 0;
+                this.frame = 0;
+                this.invincible = 0;
+            }
+
+            jump() {
+                if (this.jumps < 2) {
+                    this.vy = CONFIG.jumpForce;
+                    this.jumps++;
+                    createParticles(this.x + this.width/2, this.y + this.height, '#1D9E75', 10);
+                }
+            }
+
+            update() {
+                this.vy += CONFIG.gravity;
+                this.y += this.vy;
+
+                const ground = canvas.height - 100 - this.height;
+                if (this.y > ground) {
+                    this.y = ground;
+                    this.vy = 0;
+                    this.jumps = 0;
+                }
+
+                if (this.invincible > 0) this.invincible--;
+                
+                this.frame += gameState.speed * 0.1;
+            }
+
+            draw() {
+                ctx.save();
+                
+                if (this.invincible > 0 && Math.floor(Date.now() / 50) % 2 === 0) {
+                    ctx.globalAlpha = 0.3;
+                }
+
+                // Simplified Athlete Silhouette
+                ctx.translate(this.x, this.y);
+                
+                // Shadow
+                ctx.fillStyle = 'rgba(0,0,0,0.2)';
+                ctx.beginPath();
+                ctx.ellipse(this.width/2, this.height + 10, 30, 5, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Body (Jersey)
+                ctx.fillStyle = '#1D9E75';
+                ctx.fillRect(15, 20, 30, 40);
+                
+                // Head
+                ctx.fillStyle = '#ffdbac';
+                ctx.beginPath();
+                ctx.arc(30, 10, 10, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Brand Name on Jersey
+                ctx.fillStyle = 'white';
+                ctx.font = 'bold 8px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('YoPRO', 30, 40);
+
+                // Legs (Running animation)
+                const legSwing = Math.sin(this.frame) * 20;
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 6;
+                ctx.lineCap = 'round';
+                
+                // Leg 1
+                ctx.beginPath();
+                ctx.moveTo(25, 60);
+                ctx.lineTo(25 + legSwing, 85);
+                ctx.stroke();
+                
+                // Leg 2
+                ctx.beginPath();
+                ctx.moveTo(35, 60);
+                ctx.lineTo(35 - legSwing, 85);
+                ctx.stroke();
+
+                // Arms
+                ctx.beginPath();
+                ctx.moveTo(15, 30);
+                ctx.lineTo(5 - legSwing/2, 50);
+                ctx.stroke();
+
+                ctx.restore();
+            }
+        }
+
+        class Bottle {
+            constructor() {
+                this.flavor = CONFIG.flavors[Math.floor(Math.random() * CONFIG.flavors.length)];
+                this.width = 30;
+                this.height = 60;
+                this.x = canvas.width + 100;
+                this.y = Math.random() < 0.5 ? canvas.height - 160 : canvas.height - 250;
+                this.collected = false;
+            }
+
+            update() {
+                this.x -= gameState.speed;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                
+                // Bottle Body
+                ctx.fillStyle = '#111';
+                ctx.beginPath();
+                ctx.roundRect(0, 0, this.width, this.height, 5);
+                ctx.fill();
+                
+                // Label/Band
+                ctx.fillStyle = this.flavor.band;
+                ctx.fillRect(0, 20, this.width, 20);
+                
+                // Cap
+                ctx.fillStyle = '#333';
+                ctx.fillRect(5, -5, 20, 8);
+
+                // Text
+                ctx.fillStyle = 'white';
+                ctx.font = '6px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('YoPRO', 15, 30);
+                ctx.fillText('24g', 15, 38);
+
+                ctx.restore();
+            }
+        }
+
+        class Obstacle {
+            constructor() {
+                this.emoji = CONFIG.junkItems[Math.floor(Math.random() * CONFIG.junkItems.length)];
+                this.width = 50;
+                this.height = 50;
+                this.x = canvas.width + 100;
+                this.y = canvas.height - 150;
+            }
+
+            update() {
+                this.x -= gameState.speed;
+            }
+
+            draw() {
+                ctx.font = '40px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(this.emoji, this.x + this.width/2, this.y + this.height/2);
+            }
+        }
+
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                this.color = color;
+                this.size = Math.random() * 5 + 2;
+                this.vx = (Math.random() - 0.5) * 10;
+                this.vy = (Math.random() - 0.5) * 10;
+                this.life = 1.0;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.life -= 0.02;
+            }
+
+            draw() {
+                ctx.globalAlpha = this.life;
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 1;
+            }
+        }
+
+        let player;
+        let bottles = [];
+        let obstacles = [];
+        let particles = [];
+        let stars = [];
+        let spawnTimer = 0;
+
+        function initStars() {
+            stars = [];
+            for (let i = 0; i < 100; i++) {
+                stars.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height * 0.7,
+                    size: Math.random() * 2,
+                    speed: Math.random() * 0.5 + 0.1
+                });
+            }
+        }
+
+        function createParticles(x, y, color, count) {
+            for (let i = 0; i < count; i++) {
+                particles.push(new Particle(x, y, color));
+            }
+        }
+
+        function spawn() {
+            spawnTimer++;
+            const interval = Math.max(40, 100 - (gameState.score / 10));
+            
+            if (spawnTimer > interval) {
+                if (Math.random() < 0.6) {
+                    bottles.push(new Bottle());
+                } else {
+                    obstacles.push(new Obstacle());
+                }
+                spawnTimer = 0;
+            }
+        }
+
+        function handleCollisions() {
+            // Bottles
+            bottles.forEach((bottle, index) => {
+                if (!bottle.collected && 
+                    player.x < bottle.x + bottle.width &&
+                    player.x + player.width > bottle.x &&
+                    player.y < bottle.y + bottle.height &&
+                    player.y + player.height > bottle.y) {
+                    
+                    bottle.collected = true;
+                    gameState.protein = Math.min(100, gameState.protein + CONFIG.bottleValue);
+                    createParticles(bottle.x + bottle.width/2, bottle.y + bottle.height/2, '#1D9E75', 15);
+                    bottles.splice(index, 1);
+                }
+            });
+
+            // Obstacles
+            obstacles.forEach((obs, index) => {
+                if (player.invincible === 0 &&
+                    player.x < obs.x + obs.width - 10 &&
+                    player.x + player.width > obs.x + 10 &&
+                    player.y < obs.y + obs.height - 10 &&
+                    player.y + player.height > obs.y + 10) {
+                    
+                    gameState.protein -= CONFIG.damageValue;
+                    player.invincible = 30;
+                    createParticles(player.x + player.width/2, player.y + player.height/2, '#E74C3C', 20);
+                    obstacles.splice(index, 1);
+                }
+            });
+        }
+
+        function updateHUD() {
+            scoreVal.textContent = Math.floor(gameState.score);
+            proteinBar.style.width = gameState.protein + '%';
+            proteinText.textContent = Math.floor(gameState.protein) + '%';
+
+            if (gameState.protein < 30) {
+                proteinBar.classList.add('bar-warning');
+            } else {
+                proteinBar.classList.remove('bar-warning');
+            }
+
+            // Streak check
+            if (Math.floor(gameState.score / 100) > gameState.lastStreakScore) {
+                gameState.lastStreakScore = Math.floor(gameState.score / 100);
+                showStreak();
+            }
+        }
+
+        function showStreak() {
+            streakPopup.classList.add('show-streak');
+            setTimeout(() => {
+                streakPopup.classList.remove('show-streak');
+            }, 1000);
+        }
+
+        function drawBackground() {
+            // Sky
+            ctx.fillStyle = '#0D1B14';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Stars
+            ctx.fillStyle = 'rgba(255,255,255,0.5)';
+            stars.forEach(star => {
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+                ctx.fill();
+                star.x -= star.speed * (gameState.speed / CONFIG.baseSpeed);
+                if (star.x < 0) star.x = canvas.width;
+            });
+
+            // Ground
+            ctx.fillStyle = '#1D9E75';
+            ctx.fillRect(0, canvas.height - 100, canvas.width, 100);
+
+            // Track lines
+            ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+            ctx.setLineDash([40, 40]);
+            ctx.lineDashOffset = gameState.distance;
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(0, canvas.height - 50);
+            ctx.lineTo(canvas.width, canvas.height - 50);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            
+            gameState.distance += gameState.speed;
+
+            // Speed lines if fast
+            if (gameState.speed > 8) {
+                ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+                ctx.lineWidth = 1;
+                for (let i = 0; i < 5; i++) {
+                    const y = 200 + i * 100;
+                    const len = Math.random() * 100 + 50;
+                    const x = (Date.now() + i * 1000) % (canvas.width + len) - len;
+                    ctx.beginPath();
+                    ctx.moveTo(x, y);
+                    ctx.lineTo(x + len, y);
+                    ctx.stroke();
+                }
+            }
+        }
+
+        function gameLoop() {
+            if (!gameState.running) return;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            gameState.score += 0.1;
+            gameState.speed = Math.min(CONFIG.maxSpeed, CONFIG.baseSpeed + (gameState.score * CONFIG.speedIncrease));
+            gameState.protein -= CONFIG.drainRate;
+
+            if (gameState.protein <= 0) {
+                gameOver();
+                return;
+            }
+
+            drawBackground();
+            
+            spawn();
+            handleCollisions();
+
+            player.update();
+            player.draw();
+
+            bottles.forEach((b, i) => {
+                b.update();
+                b.draw();
+                if (b.x < -100) bottles.splice(i, 1);
+            });
+
+            obstacles.forEach((o, i) => {
+                o.update();
+                o.draw();
+                if (o.x < -100) obstacles.splice(i, 1);
+            });
+
+            particles.forEach((p, i) => {
+                p.update();
+                p.draw();
+                if (p.life <= 0) particles.splice(i, 1);
+            });
+
+            updateHUD();
+            requestAnimationFrame(gameLoop);
+        }
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            if (player) {
+                player.y = canvas.height - 150;
+            }
+            initStars();
+        }
+
+        function gameOver() {
+            gameState.running = false;
+            overlay.classList.remove('hidden');
+            
+            const finalScore = Math.floor(gameState.score);
+            let message = 'GAME OVER';
+            
+            if (finalScore > gameState.bestScore) {
+                gameState.bestScore = finalScore;
+                localStorage.setItem('yopro_best_score', finalScore);
+                message = 'NEW PERSONAL BEST!';
+                bestVal.textContent = finalScore;
+            }
+
+            document.querySelector('h1').textContent = message;
+            document.querySelector('.subtitle').textContent = 'Final Score: ' + finalScore;
+            startBtn.textContent = 'RETRY';
+        }
+
+        function start() {
+            gameState.running = true;
+            gameState.score = 0;
+            gameState.protein = 60;
+            gameState.speed = CONFIG.baseSpeed;
+            gameState.lastStreakScore = 0;
+            bottles = [];
+            obstacles = [];
+            particles = [];
+            player = new Player();
+            overlay.classList.add('hidden');
+            gameLoop();
+        }
+
+        window.addEventListener('resize', resize);
+        window.addEventListener('keydown', (e) => {
+            if (e.code === 'Space' || e.code === 'ArrowUp') {
+                if (gameState.running) player.jump();
+                else start();
+            }
+        });
+
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (gameState.running) player.jump();
+        });
+
+        startBtn.addEventListener('click', start);
+
+        resize();
+    </script>
+</body>
+</html>
