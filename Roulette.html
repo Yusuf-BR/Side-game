@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YoPRO | Roulette Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --yopro-green: #1D9E75;
+            --yopro-dark: #0D1B14;
+            --yopro-black: #050a08;
+            --yopro-amber: #EF9F27;
+            --white: #ffffff;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'DM Sans', sans-serif;
+            background-color: var(--yopro-black);
+            color: var(--white);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        header { padding: 20px; text-align: center; width: 100%; }
+        .logo { font-family: 'Bebas Neue', cursive; font-size: 40px; color: var(--yopro-green); margin: 0; }
+
+        .wallet-display {
+            background: rgba(29, 158, 117, 0.1);
+            border: 1px solid var(--yopro-green);
+            padding: 10px 25px;
+            border-radius: 30px;
+            font-family: 'Bebas Neue', cursive; font-size: 24px;
+            margin: 10px 0;
+        }
+        .wallet-value { color: var(--yopro-amber); }
+
+        .roulette-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 40px;
+            padding: 20px;
+            max-width: 1200px;
+        }
+
+        canvas {
+            border-radius: 50%;
+            box-shadow: 0 0 50px rgba(0,0,0,0.8), 0 0 20px rgba(29, 158, 117, 0.3);
+            border: 8px solid #333;
+        }
+
+        .betting-table {
+            background: var(--yopro-dark);
+            padding: 30px;
+            border-radius: 20px;
+            border: 1px solid #444;
+            flex: 1;
+            min-width: 350px;
+        }
+
+        .bet-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .bet-spot {
+            background: #111;
+            border: 1px solid #333;
+            padding: 15px;
+            text-align: center;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Bebas Neue', cursive;
+            font-size: 20px;
+        }
+
+        .bet-spot:hover { border-color: var(--yopro-green); background: #1a1a1a; }
+        .bet-spot.selected { border-color: var(--yopro-amber); background: rgba(239, 159, 39, 0.1); color: var(--yopro-amber); }
+
+        .controls { text-align: center; }
+        .spin-btn {
+            background: var(--yopro-green); color: white; border: none;
+            padding: 15px 80px; font-family: 'Bebas Neue', cursive;
+            font-size: 32px; border-radius: 8px; cursor: pointer;
+            transition: 0.3s;
+        }
+        .spin-btn:hover { background: #25c08f; transform: scale(1.05); }
+        .spin-btn:disabled { background: #333; cursor: not-allowed; transform: none; }
+
+        .result-panel {
+            margin-top: 20px;
+            height: 60px;
+            font-family: 'Bebas Neue', cursive;
+            font-size: 36px;
+            color: var(--yopro-amber);
+            text-align: center;
+        }
+
+        .back-btn { margin: 30px; color: #555; text-decoration: none; font-size: 14px; letter-spacing: 2px; text-transform: uppercase; }
+        .back-btn:hover { color: var(--yopro-green); }
+    </style>
+</head>
+<body>
+
+    <header><h1 class="logo">YO<span>PRO</span> ROULETTE PRO</h1></header>
+
+    <div class="wallet-display">BALANCE: <span class="wallet-value" id="balance">0g</span></div>
+
+    <div class="roulette-container">
+        <canvas id="wheel" width="450" height="450"></canvas>
+
+        <div class="betting-table">
+            <h3 style="font-family: 'Bebas Neue'; text-align: center; margin-top: 0;">PLACE YOUR WAGER</h3>
+            <div class="bet-grid">
+                <div class="bet-spot" onclick="selectBet('nature', 2)">NATURE (x2)</div>
+                <div class="bet-spot" onclick="selectBet('chocolat', 2)">CHOCOLAT (x2)</div>
+                <div class="bet-spot" onclick="selectBet('caramel', 2)">CARAMEL (x2)</div>
+                <div class="bet-spot" onclick="selectBet('fraise', 3)">FRAISE (x3)</div>
+                <div class="bet-spot" onclick="selectBet('vanilla', 3)">VANILLA (x3)</div>
+                <div class="bet-spot" onclick="selectBet('jackpot', 10)">MAX PB (x10)</div>
+            </div>
+            
+            <div style="text-align: center; margin-bottom: 20px;">
+                <label style="font-size: 12px; color: #888;">WAGER AMOUNT:</label><br>
+                <input type="number" id="wager-input" value="10" min="5" step="5" 
+                       style="background: #000; border: 1px solid #444; color: white; padding: 10px; border-radius: 4px; font-family: 'Bebas Neue'; font-size: 20px; width: 100px; text-align: center;">
+            </div>
+
+            <div class="controls">
+                <button class="spin-btn" id="spin-btn" onclick="spin()">SPIN WHEEL</button>
+            </div>
+            <div class="result-panel" id="result"></div>
+        </div>
+    </div>
+
+    <a href="index.html" class="back-btn">Back to Hub</a>
+
+    <script src="js/yopro-api.js"></script>
+    <script>
+        const canvas = document.getElementById('wheel');
+        const ctx = canvas.getContext('2d');
+        const segments = [
+            { label: 'NATURE', color: '#00D2FF', id: 'nature' },
+            { label: 'CHOCOLAT', color: '#795548', id: 'chocolat' },
+            { label: 'CARAMEL', color: '#EF9F27', id: 'caramel' },
+            { label: 'FRAISE', color: '#FF4D6D', id: 'fraise' },
+            { label: 'VANILLA', color: '#F5DEB3', id: 'vanilla' },
+            { label: 'MAX PB', color: '#1D9E75', id: 'jackpot' }
+        ];
+
+        let currentRotation = 0;
+        let isSpinning = false;
+        let selectedBetId = null;
+        let selectedMultiplier = 1;
+
+        function drawWheel() {
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = canvas.width / 2 - 10;
+            const sliceAngle = (Math.PI * 2) / segments.length;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            segments.forEach((seg, i) => {
+                const angle = currentRotation + i * sliceAngle;
+                
+                // Draw slice
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.arc(centerX, centerY, radius, angle, angle + sliceAngle);
+                ctx.fillStyle = seg.color;
+                ctx.fill();
+                ctx.strokeStyle = 'rgba(0,0,0,0.2)';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // Draw text
+                ctx.save();
+                ctx.translate(centerX, centerY);
+                ctx.rotate(angle + sliceAngle / 2);
+                ctx.textAlign = 'right';
+                ctx.fillStyle = 'white';
+                ctx.font = 'bold 20px Bebas Neue';
+                ctx.fillText(seg.label, radius - 30, 10);
+                ctx.restore();
+            });
+
+            // Draw center pointer
+            ctx.fillStyle = 'white';
+            ctx.beginPath();
+            ctx.moveTo(centerX + radius - 10, centerY);
+            ctx.lineTo(centerX + radius + 20, centerY - 15);
+            ctx.lineTo(centerX + radius + 20, centerY + 15);
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        function selectBet(id, mult) {
+            if (isSpinning) return;
+            selectedBetId = id;
+            selectedMultiplier = mult;
+            document.querySelectorAll('.bet-spot').forEach(spot => {
+                spot.classList.toggle('selected', spot.textContent.toLowerCase().includes(id));
+            });
+        }
+
+        function spin() {
+            if (isSpinning || !selectedBetId) {
+                if (!selectedBetId) document.getElementById('result').textContent = "SELECT A FLAVOR!";
+                return;
+            }
+
+            const wager = parseInt(document.getElementById('wager-input').value);
+            if (!YoPRO.transaction(-wager)) {
+                document.getElementById('result').textContent = "INSUFFICIENT PROTEIN!";
+                return;
+            }
+
+            isSpinning = true;
+            document.getElementById('spin-btn').disabled = true;
+            document.getElementById('result').textContent = "SPINNING...";
+            updateBalance();
+
+            const spinDuration = 3000 + Math.random() * 2000;
+            const startRotation = currentRotation;
+            const extraRotation = Math.PI * 10 + Math.random() * Math.PI * 2;
+            const startTime = performance.now();
+
+            function animate(now) {
+                const elapsed = now - startTime;
+                const progress = Math.min(elapsed / spinDuration, 1);
+                
+                // Ease out cubic
+                const easeOut = 1 - Math.pow(1 - progress, 3);
+                currentRotation = startRotation + extraRotation * easeOut;
+                
+                drawWheel();
+
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    finishSpin(wager);
+                }
+            }
+            requestAnimationFrame(animate);
+        }
+
+        function finishSpin(wager) {
+            isSpinning = false;
+            document.getElementById('spin-btn').disabled = false;
+
+            // Determine winner based on rotation
+            // The pointer is at 0 radians (right side)
+            const normalizedRotation = (currentRotation % (Math.PI * 2));
+            const pointerAngle = (Math.PI * 2 - normalizedRotation) % (Math.PI * 2);
+            const sliceAngle = (Math.PI * 2) / segments.length;
+            const winningIndex = Math.floor(pointerAngle / sliceAngle);
+            const winner = segments[winningIndex];
+
+            if (winner.id === selectedBetId) {
+                const winAmount = wager * selectedMultiplier;
+                YoPRO.transaction(winAmount);
+                YoPRO.saveScore('roulette', winAmount);
+                document.getElementById('result').textContent = "WINNER! +" + winAmount + "g " + winner.label;
+            } else {
+                document.getElementById('result').textContent = "RESULT: " + winner.label;
+            }
+            updateBalance();
+        }
+
+        function updateBalance() {
+            document.getElementById('balance').textContent = YoPRO.getBalance() + 'g';
+        }
+
+        window.onload = () => {
+            updateBalance();
+            drawWheel();
+        };
+    </script>
+</body>
+</html>

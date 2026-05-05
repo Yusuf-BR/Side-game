@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YoPRO | Protein Slots</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --yopro-green: #1D9E75;
+            --yopro-dark: #0D1B14;
+            --yopro-black: #050a08;
+            --yopro-amber: #EF9F27;
+            --white: #ffffff;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'DM Sans', sans-serif;
+            background-color: var(--yopro-black);
+            color: var(--white);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        header {
+            padding: 20px;
+            text-align: center;
+            width: 100%;
+            background: linear-gradient(to bottom, var(--yopro-dark), var(--yopro-black));
+        }
+
+        .logo {
+            font-family: 'Bebas Neue', cursive;
+            font-size: 40px;
+            color: var(--yopro-green);
+            margin: 0;
+        }
+
+        .wallet-display {
+            background: rgba(29, 158, 117, 0.1);
+            border: 1px solid var(--yopro-green);
+            padding: 10px 25px;
+            border-radius: 30px;
+            font-family: 'Bebas Neue', cursive;
+            font-size: 24px;
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .wallet-value { color: var(--yopro-amber); }
+
+        /* Slot Machine Styles */
+        .slot-machine {
+            background: #111;
+            padding: 30px;
+            border-radius: 20px;
+            border: 4px solid #333;
+            box-shadow: 0 0 50px rgba(0,0,0,0.5), 0 0 20px rgba(29, 158, 117, 0.2);
+            position: relative;
+            margin: 20px;
+        }
+
+        .reels {
+            display: flex;
+            gap: 15px;
+            background: #000;
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid #222;
+        }
+
+        .reel {
+            width: 120px;
+            height: 120px;
+            background: var(--yopro-dark);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 60px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .reel-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: transform 0.1s linear;
+        }
+
+        .controls {
+            margin-top: 30px;
+            text-align: center;
+        }
+
+        .bet-selector {
+            margin-bottom: 20px;
+        }
+
+        .bet-btn {
+            background: transparent;
+            border: 1px solid #444;
+            color: #888;
+            padding: 8px 20px;
+            margin: 0 5px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-family: 'Bebas Neue', cursive;
+            font-size: 18px;
+        }
+
+        .bet-btn.active {
+            border-color: var(--yopro-amber);
+            color: var(--yopro-amber);
+            background: rgba(239, 159, 39, 0.1);
+        }
+
+        .spin-btn {
+            background: var(--yopro-green);
+            color: white;
+            border: none;
+            padding: 15px 60px;
+            font-family: 'Bebas Neue', cursive;
+            font-size: 32px;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+            transition: all 0.3s;
+        }
+
+        .spin-btn:hover { background: #25c08f; transform: translateY(-3px); }
+        .spin-btn:disabled { background: #333; cursor: not-allowed; transform: none; box-shadow: none; }
+
+        .result-msg {
+            font-family: 'Bebas Neue', cursive;
+            font-size: 40px;
+            margin-top: 20px;
+            height: 50px;
+            color: var(--yopro-amber);
+            text-shadow: 0 0 20px rgba(239, 159, 39, 0.5);
+        }
+
+        .prize-table {
+            margin-top: 40px;
+            background: rgba(255,255,255,0.05);
+            padding: 20px;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .prize-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 14px;
+            color: #aaa;
+        }
+
+        .prize-row span:last-child { color: var(--white); font-weight: bold; }
+
+        .back-btn {
+            margin: 30px;
+            color: #555;
+            text-decoration: none;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .back-btn:hover { color: var(--yopro-green); }
+
+        /* Animations */
+        @keyframes blur {
+            0% { filter: blur(0); }
+            50% { filter: blur(10px); }
+            100% { filter: blur(0); }
+        }
+
+        .spinning { animation: blur 0.2s infinite; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1 class="logo">YO<span>PRO</span> PROTEIN SLOTS</h1>
+    </header>
+
+    <div class="wallet-display">
+        AVAILABLE PROTEIN: <span class="wallet-value" id="wallet-balance">0g</span>
+    </div>
+
+    <div class="slot-machine">
+        <div class="reels">
+            <div class="reel"><div class="reel-content" id="reel-1">🥤</div></div>
+            <div class="reel"><div class="reel-content" id="reel-2">🥤</div></div>
+            <div class="reel"><div class="reel-content" id="reel-3">🥤</div></div>
+        </div>
+
+        <div class="controls">
+            <div class="bet-selector">
+                <button class="bet-btn active" onclick="setBet(10)">BET 10g</button>
+                <button class="bet-btn" onclick="setBet(25)">BET 25g</button>
+                <button class="bet-btn" onclick="setBet(50)">BET 50g</button>
+            </div>
+            <button class="spin-btn" id="spin-button" onclick="spin()">SPIN</button>
+        </div>
+        
+        <div class="result-msg" id="result-text"></div>
+    </div>
+
+    <div class="prize-table">
+        <div class="prize-row"><span>3x YoPRO 🥤</span> <span>10x WAGER</span></div>
+        <div class="prize-row"><span>3x Weights 🏋️</span> <span>5x WAGER</span></div>
+        <div class="prize-row"><span>3x Energy ⚡</span> <span>3x WAGER</span></div>
+        <div class="prize-row"><span>2x YoPRO 🥤</span> <span>2x WAGER</span></div>
+    </div>
+
+    <a href="index.html" class="back-btn">Back to Hub</a>
+
+    <script src="js/yopro-api.js"></script>
+    <script>
+        const symbols = ['🥤', '🏋️', '⚡', '🍏', '🥜', '🍔'];
+        const weights = [0.15, 0.15, 0.2, 0.2, 0.2, 0.1]; // Probability weights
+        let currentBet = 10;
+        let isSpinning = false;
+
+        function updateBalance() {
+            document.getElementById('wallet-balance').textContent = YoPRO.getBalance() + 'g';
+        }
+
+        function setBet(amount) {
+            if (isSpinning) return;
+            currentBet = amount;
+            document.querySelectorAll('.bet-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.textContent.includes(amount + 'g'));
+            });
+        }
+
+        function getRandomSymbol() {
+            const r = Math.random();
+            let sum = 0;
+            for (let i = 0; i < weights.length; i++) {
+                sum += weights[i];
+                if (r <= sum) return symbols[i];
+            }
+            return symbols[symbols.length - 1];
+        }
+
+        async function spin() {
+            if (isSpinning) return;
+            
+            if (!YoPRO.transaction(-currentBet)) {
+                document.getElementById('result-text').textContent = "NEED MORE PROTEIN!";
+                return;
+            }
+
+            isSpinning = true;
+            updateBalance();
+            document.getElementById('spin-button').disabled = true;
+            document.getElementById('result-text').textContent = "";
+
+            const finalSymbols = [getRandomSymbol(), getRandomSymbol(), getRandomSymbol()];
+            const reelEls = [document.getElementById('reel-1'), document.getElementById('reel-2'), document.getElementById('reel-3')];
+
+            // Start spinning animation
+            reelEls.forEach(el => el.classList.add('spinning'));
+
+            // Stop reels one by one
+            for (let i = 0; i < 3; i++) {
+                await new Promise(r => setTimeout(r, 600 + i * 400));
+                reelEls[i].classList.remove('spinning');
+                reelEls[i].textContent = finalSymbols[i];
+            }
+
+            checkWin(finalSymbols);
+            isSpinning = false;
+            document.getElementById('spin-button').disabled = false;
+        }
+
+        function checkWin(res) {
+            let winAmount = 0;
+            let msg = "";
+
+            if (res[0] === res[1] && res[1] === res[2]) {
+                if (res[0] === '🥤') winAmount = currentBet * 10;
+                else if (res[0] === '🏋️') winAmount = currentBet * 5;
+                else if (res[0] === '⚡') winAmount = currentBet * 3;
+                else if (res[0] !== '🍔') winAmount = currentBet * 2;
+                msg = winAmount > 0 ? "BIG GAINS! +" + winAmount + "g" : "NO GAINS THIS TIME";
+            } else if ((res[0] === '🥤' && res[1] === '🥤') || (res[1] === '🥤' && res[2] === '🥤')) {
+                winAmount = currentBet * 2;
+                msg = "DOUBLE FUEL! +" + winAmount + "g";
+            } else if (res.includes('🍔')) {
+                msg = "JUNK FOOD LOSS";
+            } else {
+                msg = "KEEP RUNNING!";
+            }
+
+            if (winAmount > 0) {
+                YoPRO.transaction(winAmount);
+                YoPRO.saveScore('slots', winAmount); // Track biggest win as high score
+                updateBalance();
+            }
+            document.getElementById('result-text').textContent = msg;
+        }
+
+        window.onload = updateBalance;
+    </script>
+</body>
+</html>

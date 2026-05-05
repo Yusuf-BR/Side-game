@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YoPRO Arcade: High-Protein Edition</title>
+    <!-- Brand Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Modular Styling -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="theme-nature">
+    <div id="game-app">
+        <!-- Dashboard / HUD -->
+        <header id="game-hud">
+            <div class="hud-item stats-left">
+                <span class="hud-label">PROTEIN GAIN</span>
+                <span class="hud-value" id="score-val">0G</span>
+            </div>
+            
+            <div id="circuit-info">
+                <span class="circuit-num" id="level-num">CIRCUIT 01</span>
+                <h2 class="flavor-title" id="flavor-name">NATURE</h2>
+                <div class="brand-sub">FUELED BY YoPRO</div>
+            </div>
+            
+            <div class="hud-item stats-right">
+                <span class="hud-label">PEAK PERFORMANCE</span>
+                <span class="hud-value" id="best-val">0G</span>
+            </div>
+        </header>
+
+        <!-- Viewport -->
+        <main id="game-viewport">
+            <canvas id="gameCanvas"></canvas>
+            
+            <!-- Overlays -->
+            <div id="overlay-wrap">
+                <!-- Title Screen -->
+                <section id="overlay-menu" class="overlay active">
+                    <div class="overlay-inner">
+                        <div id="intro-flavor-tag" class="flavor-badge">NATURE</div>
+                        <h1 class="logo-main">YO<span>PRO</span></h1>
+                        <p class="logo-sub">ARCADE UNLEASHED</p>
+                        <button id="btn-start" class="btn-primary">START SESSION</button>
+                        <div class="hints">
+                            <span>ARROWS TO MOVE</span>
+                            <span>COLLECT PROTEIN • AVOID JUNK</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Transition Screen -->
+                <section id="overlay-next" class="overlay">
+                    <div class="overlay-inner">
+                        <h2 class="trans-title">CIRCUIT CLEARED!</h2>
+                        <div id="next-flavor-tag" class="flavor-badge large">CHOCOLAT</div>
+                        <p class="next-label" id="next-flavor-text">UP NEXT: PROTEIN FUEL</p>
+                    </div>
+                </section>
+
+                <!-- Game Over Screen -->
+                <section id="overlay-death" class="overlay">
+                    <div class="overlay-inner">
+                        <h1 class="death-title">COOLDOWN</h1>
+                        <p class="death-sub">WORKOUT SUMMARY</p>
+                        <div class="final-stat">
+                            <span id="final-score">0G</span>
+                            <small>PROTEIN COLLECTED</small>
+                        </div>
+                        <div style="display: flex; gap: 20px;">
+                            <button id="btn-retry" class="btn-primary">RE-WORKOUT</button>
+                            <a href="../index.html" class="btn-primary" style="background: rgba(255,255,255,0.1); border: 1px solid var(--yopro-green); text-decoration: none;">HUB</a>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- In-Game Notifications -->
+            <div id="game-alert">READY?</div>
+        </main>
+
+        <!-- Footer / Performance Meters -->
+        <footer id="game-footer">
+            <div class="meter-group">
+                <div id="metabolism-meter" class="performance-meter">
+                    <div id="metabolism-bar"></div>
+                    <span class="meter-label">METABOLISM FUEL</span>
+                </div>
+                <div id="power-meter" class="performance-meter">
+                    <div id="power-bar"></div>
+                    <span class="meter-label">MUSCLE BOOST ACTIVE</span>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Logic Layer -->
+    <script src="../js/yopro-api.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/maze.js"></script>
+    <script src="js/entities.js"></script>
+    <script src="js/engine.js"></script>
+</body>
+</html>

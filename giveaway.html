@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YoPRO | Exclusive Giveaway</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --yopro-green: #1D9E75;
+            --yopro-dark: #0D1B14;
+            --yopro-black: #050a08;
+            --yopro-amber: #EF9F27;
+            --white: #ffffff;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'DM Sans', sans-serif;
+            background-color: var(--yopro-black);
+            color: var(--white);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .form-container {
+            background: var(--yopro-dark);
+            padding: 50px;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 500px;
+            border: 1px solid var(--yopro-green);
+            box-shadow: 0 0 40px rgba(29, 158, 117, 0.2);
+            position: relative;
+        }
+
+        h1 {
+            font-family: 'Bebas Neue', cursive;
+            font-size: 50px;
+            color: var(--yopro-green);
+            margin: 0 0 10px 0;
+            text-align: center;
+        }
+
+        p {
+            text-align: center;
+            color: #aaa;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+            color: #888;
+        }
+
+        input {
+            width: 100%;
+            padding: 15px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            color: white;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--yopro-green);
+            background: rgba(255,255,255,0.1);
+        }
+
+        .btn-submit {
+            width: 100%;
+            background: var(--yopro-green);
+            color: white;
+            border: none;
+            padding: 18px;
+            font-family: 'Bebas Neue', cursive;
+            font-size: 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.3s;
+        }
+
+        .btn-submit:hover {
+            background: #25c08f;
+            transform: translateY(-2px);
+        }
+
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            color: #555;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .back-link:hover {
+            color: var(--yopro-green);
+        }
+
+        #error-msg {
+            color: #ff4757;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .success-msg {
+            text-align: center;
+            display: none;
+        }
+
+        .success-msg h2 {
+            font-family: 'Bebas Neue', cursive;
+            font-size: 40px;
+            color: var(--yopro-amber);
+        }
+
+        /* Access Denied State */
+        .denied {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .denied h1 { color: #ff4757; }
+    </style>
+</head>
+<body>
+
+    <div class="form-container" id="main-container">
+        <div id="giveaway-form-content">
+            <h1>CLAIM YOUR REWARD</h1>
+            <p>Enter your details to join the elite YoPRO giveaway.</p>
+            
+            <div id="error-msg">Please complete all fields.</div>
+
+            <form id="giveaway-form">
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" id="name" placeholder="Enter your name" required>
+                </div>
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" id="email" placeholder="Enter your email" required>
+                </div>
+                <div class="form-group">
+                    <label>Instagram / Social Handle</label>
+                    <input type="text" id="handle" placeholder="@yourhandle" required>
+                </div>
+                <button type="submit" class="btn-submit">SUBMIT ENTRY</button>
+            </form>
+        </div>
+
+        <div class="success-msg" id="success-content">
+            <h2>ENTRY CONFIRMED!</h2>
+            <p>You're in the running. Winners will be contacted via email.</p>
+            <a href="index.html" class="btn-submit" style="display: block; text-decoration: none;">BACK TO HUB</a>
+        </div>
+
+        <a href="index.html" class="back-link">Return to Hub</a>
+    </div>
+
+    <script src="js/yopro-api.js"></script>
+    <script>
+        window.onload = function() {
+            if (!YoPRO.isQualified()) {
+                document.getElementById('main-container').innerHTML = `
+                    <div class="denied">
+                        <h1>ACCESS DENIED</h1>
+                        <p>You haven't reached the 500g threshold yet.</p>
+                        <a href="index.html" class="btn-submit" style="display: block; text-decoration: none;">GET QUALIFIED</a>
+                    </div>
+                `;
+            }
+        };
+
+        document.getElementById('giveaway-form').onsubmit = function(e) {
+            e.preventDefault();
+            
+            // In a real commercial site, this would send data to a server
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const handle = document.getElementById('handle').value;
+
+            if (name && email && handle) {
+                document.getElementById('giveaway-form-content').style.display = 'none';
+                document.getElementById('success-content').style.display = 'block';
+                console.log('Submission:', { name, email, handle });
+            } else {
+                document.getElementById('error-msg').style.display = 'block';
+            }
+        };
+    </script>
+</body>
+</html>

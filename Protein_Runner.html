@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YoPRO Protein Rush</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --yopro-green: #1D9E75;
+            --yopro-dark: #0D1B14;
+            --yopro-amber: #EF9F27;
+            --yopro-red: #E74C3C;
+            --bg-color: #0D1B14;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: var(--bg-color);
+            font-family: 'DM Sans', sans-serif;
+            color: white;
+            user-select: none;
+            touch-action: manipulation;
+        }
+
+        #game-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        canvas {
+            display: block;
+            background: #0D1B14;
+        }
+
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            box-sizing: border-box;
+            z-index: 10;
+        }
+
+        .hud-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            width: 100%;
+        }
+
+        .protein-container {
+            width: 300px;
+        }
+
+        .label {
+            font-family: 'Bebas Neue', cursive;
+            font-size: 24px;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .bar-bg {
+            width: 100%;
+            height: 25px;
+            background: rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.1);
+            position: relative;
+            overflow: hidden;
+            border-radius: 4px;
+        }
+
+        #protein-bar {
+            height: 100%;
+            width: 60%;
+            background: linear-gradient(90deg, var(--yopro-green), #2ecc71);
+            transition: width 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 0 20px rgba(29, 158, 117, 0.4);
+        }
+
+        .bar-warning {
+            background: linear-gradient(90deg, var(--yopro-red), #ff7675) !important;
+            box-shadow: 0 0 20px rgba(231, 76, 60, 0.4) !important;
+        }
+
+        .score-container {
+            text-align: right;
+        }
+
+        .score-value {
+            font-family: 'Bebas Neue', cursive;
+            font-size: 54px;
+            line-height: 1;
+            text-shadow: 2px 2px 10px rgba(0,0,0,0.5);
+        }
+
+        .best-score {
+            font-size: 14px;
+            opacity: 0.7;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        #overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.85);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            pointer-events: all;
+            z-index: 100;
+            transition: opacity 0.5s;
+        }
+
+        .overlay-content {
+            text-align: center;
+            max-width: 600px;
+            padding: 40px;
+            background: rgba(29, 158, 117, 0.05);
+            border: 1px solid rgba(29, 158, 117, 0.2);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            font-family: 'Bebas Neue', cursive;
+            font-size: 90px;
+            color: var(--yopro-green);
+            margin: 0;
+            text-shadow: 0 0 30px rgba(29, 158, 117, 0.4);
+            letter-spacing: 2px;
+        }
+
+        .subtitle {
+            font-size: 18px;
+            margin-bottom: 40px;
+            opacity: 0.8;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: var(--yopro-amber);
+        }
+
+        .btn {
+            background: var(--yopro-green);
+            color: white;
+            font-family: 'Bebas Neue', cursive;
+            font-size: 36px;
+            padding: 15px 60px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+            letter-spacing: 2px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+            border-radius: 4px;
+        }
+
+        .btn:hover {
+            background: #25c08f;
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 15px 30px rgba(29, 158, 117, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(1px);
+        }
+
+        .instructions {
+            margin-top: 40px;
+            font-size: 14px;
+            opacity: 0.6;
+            text-align: center;
+            line-height: 1.6;
+        }
+
+        #streak-popup {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: 'Bebas Neue', cursive;
+            font-size: 80px;
+            color: var(--yopro-amber);
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            text-shadow: 0 0 30px rgba(239, 159, 39, 0.6);
+        }
+
+        .show-streak {
+            opacity: 1 !important;
+            transform: translate(-50%, -100%) !important;
+        }
+
+        .hidden {
+            display: none !important;
+            opacity: 0;
+        }
+
+        #loading {
+            position: absolute;
+            bottom: 20px;
+            font-size: 12px;
+            opacity: 0.5;
+            letter-spacing: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="gameCanvas"></canvas>
+        <div id="ui-layer">
+            <div class="hud-top">
+                <div class="protein-container">
+                    <div class="label">
+                        <span>Protein Level</span>
+                        <span id="protein-text">60%</span>
+                    </div>
+                    <div class="bar-bg">
+                        <div id="protein-bar"></div>
+                    </div>
+                </div>
+                <div class="score-container">
+                    <div class="best-score">PB: <span id="best-val">0</span></div>
+                    <div class="score-value" id="score-val">0</div>
+                </div>
+            </div>
+            <div id="streak-popup">PROTEIN STREAK!</div>
+        </div>
+
+        <div id="overlay">
+            <div class="overlay-content">
+                <h1 id="title-text">PROTEIN RUSH</h1>
+                <div class="subtitle" id="subtitle-text">Fueled by YoPRO Delice</div>
+                <div style="display: flex; gap: 20px; justify-content: center;">
+                    <button class="btn" id="start-btn">START RUN</button>
+                    <a href="index.html" class="btn" style="background: rgba(255,255,255,0.1); border: 1px solid var(--yopro-green); text-decoration: none; line-height: 1.4;">HUB</a>
+                </div>
+                <div class="instructions">
+                    [SPACE] or [TAP] to JUMP<br>
+                    Double Jump for high bottles<br>
+                    <b>YoPRO Bottles: +24g</b> • <b>Junk Food: -22g</b>
+                </div>
+            </div>
+            <div id="loading">LOADING ASSETS...</div>
+        </div>
+    </div>
+
+    <script src="js/yopro-api.js"></script>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const startBtn = document.getElementById('start-btn');
+        const overlay = document.getElementById('overlay');
+        const scoreVal = document.getElementById('score-val');
+        const bestVal = document.getElementById('best-val');
+        const proteinBar = document.getElementById('protein-bar');
+        const proteinText = document.getElementById('protein-text');
+        const streakPopup = document.getElementById('streak-popup');
+        const loadingEl = document.getElementById('loading');
+
+        // Configuration
+        const CONFIG = {
+            gravity: 0.65,
+            jumpForce: -13.5,
+            baseSpeed: 7.5,
+            speedIncrease: 0.0009,
+            maxSpeed: 18,
+            bottleValue: 22,
+            damageValue: 28,
+            drainRate: 0.055,
+            flavors: [
+                { name: 'Nature', img: 'images/Nature reward.png' },
+                { name: 'Chocolat', img: 'images/Chocolate reward.png' },
+                { name: 'Café Caramel', img: 'images/Caramel reward.png' },
+                { name: 'Fraise Framboise', img: 'images/Strawberry reward.png' },
+                { name: 'Vanille Biscuit', img: 'images/Vanilla reward.png' }
+            ],
+            junkItems: ['🍔', '🍟', '🍕', '🥤', '🍩', '🍦', '🥓', '🥞']
+        };
+let gameState = {
+    running: false,
+    score: 0,
+    bestScore: YoPRO.getScores().rush,
+    protein: 60,
+    speed: CONFIG.baseSpeed,
+    distance: 0,
+    lastStreakScore: 0,
+    shake: 0,
+    assetsLoaded: 0,
+    totalAssets: CONFIG.flavors.length,
+    fatigue: 0,
+    combo: 0,
+    lastFlavor: null,
+    burnoutMode: false,
+    hyperRepair: 0, // Duration in frames
+    trackHue: 160 // Starting YoPRO green hue
+};
+
+bestVal.textContent = gameState.bestScore;
+
+        // Asset Loader
+        const images = {};
+        function loadAssets() {
+            CONFIG.flavors.forEach(flavor => {
+                const img = new Image();
+                img.src = flavor.img;
+                img.onload = () => {
+                    gameState.assetsLoaded++;
+                    if (gameState.assetsLoaded === gameState.totalAssets) {
+                        loadingEl.textContent = 'SYSTEMS READY';
+                        setTimeout(() => loadingEl.classList.add('hidden'), 1000);
+                    }
+                };
+                images[flavor.name] = img;
+            });
+        }
+
+        class Player {
+            constructor() {
+                this.baseWidth = 60;
+                this.baseHeight = 100;
+                this.width = this.baseWidth;
+                this.height = this.baseHeight;
+                this.x = 150;
+                this.y = canvas.height - 150;
+                this.vy = 0;
+                this.jumps = 0;
+                this.frame = 0;
+                this.invincible = 0;
+                this.trail = [];
+                this.scale = 1.0;
+                this.isSlamming = false;
+            }
+
+            jump() {
+                if (this.jumps < 2) {
+                    const fatiguePenalty = 1 - (gameState.fatigue * 0.12);
+                    this.vy = CONFIG.jumpForce * fatiguePenalty;
+                    this.jumps++;
+                    this.isSlamming = false;
+                    createParticles(this.x + this.width/2, this.y + this.height, '#1D9E75', 15);
+                }
+            }
+
+            slam() {
+                const ground = canvas.height - 120 - this.height;
+                if (this.y < ground - 20) {
+                    this.vy = 22; // High downward velocity
+                    this.isSlamming = true;
+                }
+            }
+
+            update() {
+                this.scale = 0.9 + (gameState.protein / 100) * 0.35;
+                this.width = this.baseWidth * this.scale;
+                this.height = this.baseHeight * this.scale;
+
+                const fatigueGravity = CONFIG.gravity * (1 + gameState.fatigue * 0.6);
+                this.vy += fatigueGravity;
+                this.y += this.vy;
+
+                const ground = canvas.height - 120 - this.height;
+                if (this.y > ground) {
+                    if (this.isSlamming) {
+                        createShockwave(this.x + this.width/2, ground + this.height);
+                        gameState.shake = 15;
+                    }
+                    this.y = ground;
+                    this.vy = 0;
+                    this.jumps = 0;
+                    this.isSlamming = false;
+                }
+
+                if (this.invincible > 0) this.invincible--;
+                if (gameState.hyperRepair > 0) gameState.hyperRepair--;
+                
+                this.frame += gameState.speed * (this.isSlamming ? 0.2 : 0.08);
+
+                if (gameState.speed > 11 || gameState.burnoutMode || this.isSlamming) {
+                    this.trail.push({x: this.x, y: this.y, opacity: 0.5, s: this.scale});
+                    if (this.trail.length > 12) this.trail.shift();
+                } else {
+                    this.trail = [];
+                }
+            }
+
+            draw() {
+                if (this.invincible > 0 && Math.floor(Date.now() / 50) % 2 === 0) {
+                    ctx.globalAlpha = 0.4;
+                }
+
+                this.trail.forEach((t, i) => {
+                    ctx.save();
+                    ctx.globalAlpha = t.opacity * (i / this.trail.length);
+                    if (this.isSlamming) {
+                        ctx.shadowBlur = 15;
+                        ctx.shadowColor = '#fff';
+                    }
+                    this.drawAthlete(t.x, t.y, true, t.s);
+                    ctx.restore();
+                });
+
+                if (gameState.hyperRepair > 0 || this.isSlamming) {
+                    ctx.save();
+                    ctx.shadowBlur = 25;
+                    ctx.shadowColor = this.isSlamming ? '#fff' : '#2ecc71';
+                }
+                this.drawAthlete(this.x, this.y, false, this.scale);
+                if (gameState.hyperRepair > 0 || this.isSlamming) ctx.restore();
+                
+                ctx.globalAlpha = 1;
+            }
+
+            drawAthlete(x, y, isTrail = false, s = 1.0) {
+                ctx.save();
+                ctx.translate(x, y);
+                ctx.scale(s, s);
+
+                const primary = isTrail ? 'rgba(29, 158, 117, 0.3)' : '#1D9E75';
+                const skin = isTrail ? 'rgba(255, 219, 172, 0.3)' : '#ffdbac';
+                
+                const ground = canvas.height - 120 - (this.baseHeight * s);
+                const isJumping = this.y < ground - 10;
+                
+                const phase = this.frame;
+                let legFrontAngle, legBackAngle, armFrontAngle, armBackAngle, bodyTilt, verticalBob;
+
+                if (this.isSlamming) {
+                    legFrontAngle = -1.8; legBackAngle = -1.8;
+                    armFrontAngle = 2.0; armBackAngle = 2.0;
+                    bodyTilt = 0.1; verticalBob = 0;
+                } else if (isJumping) {
+                    legFrontAngle = -1.2; legBackAngle = 0.8;
+                    armFrontAngle = 0.8; armBackAngle = 1.2;
+                    bodyTilt = 0.3; verticalBob = 0;
+                } else {
+                    legFrontAngle = Math.sin(phase) * 0.7;
+                    legBackAngle = Math.sin(phase + Math.PI) * 0.7;
+                    armFrontAngle = Math.sin(phase) * 0.9;
+                    armBackAngle = Math.sin(phase + Math.PI) * 0.9;
+                    bodyTilt = 0.15 + Math.sin(phase) * 0.05;
+                    verticalBob = Math.sin(phase * 2) * 4;
+                }
+
+                if (!isTrail) {
+                    ctx.fillStyle = 'rgba(0,0,0,0.15)';
+                    ctx.beginPath();
+                    ctx.ellipse(30, 105, 35, 6, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                ctx.translate(30, 50 + verticalBob);
+                ctx.rotate(bodyTilt);
+                ctx.translate(-30, -50);
+
+                this.drawMuscleLeg(ctx, 25, 65, legBackAngle, skin, primary, isJumping);
+                this.drawMuscleArm(ctx, 20, 25, armBackAngle, skin, primary, isJumping);
+
+                ctx.fillStyle = primary;
+                ctx.beginPath();
+                ctx.moveTo(10, 15); ctx.lineTo(50, 15); ctx.lineTo(45, 65); ctx.lineTo(15, 65);
+                ctx.closePath(); ctx.fill();
+
+                ctx.fillStyle = skin;
+                ctx.beginPath(); ctx.arc(35, 0, 14, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = '#0a3d2d';
+                ctx.beginPath(); ctx.arc(35, -2, 14, Math.PI, 0); ctx.fill();
+                if (!isTrail) ctx.fillRect(35, -5, 18, 4);
+
+                this.drawMuscleLeg(ctx, 35, 65, legFrontAngle, skin, primary, isJumping);
+                this.drawMuscleArm(ctx, 40, 25, armFrontAngle, skin, primary, isJumping);
+
+                if (!isTrail) {
+                    ctx.fillStyle = 'white';
+                    ctx.font = 'bold 10px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('YoPRO', 30, 50);
+                }
+
+                ctx.restore();
+            }
+
+            drawMuscleArm(ctx, x, y, angle, skinColor, clothColor, isJumping) {
+                ctx.save();
+                ctx.translate(x, y);
+                ctx.rotate(angle);
+                ctx.fillStyle = clothColor;
+                ctx.beginPath(); ctx.ellipse(0, 0, 8, 10, 0, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = skinColor;
+                ctx.beginPath(); ctx.ellipse(0, 12, 7, 14, 0, 0, Math.PI * 2); ctx.fill();
+                ctx.translate(0, 22);
+                const elbowRotation = this.isSlamming ? 1.0 : (isJumping ? -1.5 : (-0.8 + angle * 0.5));
+                ctx.rotate(elbowRotation);
+                ctx.beginPath(); ctx.ellipse(0, 10, 5.5, 11, 0, 0, Math.PI * 2); ctx.fill();
+                ctx.beginPath(); ctx.arc(0, 20, 6, 0, Math.PI * 2); ctx.fill();
+                ctx.restore();
+            }
+
+            drawMuscleLeg(ctx, x, y, angle, skinColor, clothColor, isJumping) {
+                ctx.save();
+                ctx.translate(x, y);
+                ctx.rotate(angle);
+                ctx.fillStyle = clothColor; 
+                ctx.beginPath(); ctx.ellipse(0, 15, 10, 22, 0, 0, Math.PI * 2); ctx.fill();
+                ctx.translate(0, 32);
+                const kneeBend = this.isSlamming ? 0 : (isJumping ? 1.8 : Math.max(0, angle * 0.8));
+                ctx.rotate(kneeBend);
+                ctx.fillStyle = skinColor;
+                ctx.beginPath(); ctx.ellipse(0, 12, 8, 15, 0, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = '#111'; ctx.fillRect(-9, 24, 20, 10);
+                ctx.restore();
+            }
+        }
+
+        class Bottle {
+            constructor() {
+                this.flavor = CONFIG.flavors[Math.floor(Math.random() * CONFIG.flavors.length)];
+                this.width = 100;
+                this.height = 125;
+                this.x = canvas.width + 100;
+                this.y = Math.random() < 0.6 ? canvas.height - 122 - this.height : canvas.height - 450;
+                this.collected = false;
+                this.rot = 0;
+                this.img = images[this.flavor.name];
+            }
+
+            update() {
+                this.x -= gameState.speed;
+                this.rot += 0.05;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x + this.width/2, this.y + this.height/2);
+                ctx.rotate(Math.sin(this.rot) * 0.1);
+                
+                const grd = ctx.createRadialGradient(0, 0, 0, 0, 0, 80);
+                grd.addColorStop(0, 'rgba(29, 158, 117, 0.4)');
+                grd.addColorStop(1, 'rgba(29, 158, 117, 0)');
+                ctx.fillStyle = grd;
+                ctx.beginPath(); ctx.arc(0, 0, 90, 0, Math.PI * 2); ctx.fill();
+
+                if (this.img && this.img.complete) {
+                    ctx.drawImage(this.img, -this.width/2, -this.height/2, this.width, this.height);
+                } else {
+                    ctx.fillStyle = '#1D9E75'; ctx.fillRect(-35, -50, 70, 100);
+                }
+
+                ctx.restore();
+            }
+        }
+
+        class Obstacle {
+            constructor(offsetX = 0) {
+                this.emoji = CONFIG.junkItems[Math.floor(Math.random() * CONFIG.junkItems.length)];
+                this.width = 65;
+                this.height = 65;
+                this.x = canvas.width + 100 + offsetX;
+                this.baseY = canvas.height - 185;
+                this.y = this.baseY;
+                this.pulse = 0;
+                // NEW: Bounce behavior for some junk
+                this.isBouncer = Math.random() < 0.3;
+                this.bounceSpeed = 0.05 + Math.random() * 0.1;
+                this.bounceHeight = 50 + Math.random() * 100;
+            }
+
+            update() {
+                this.x -= gameState.speed;
+                this.pulse += 0.1;
+                if (this.isBouncer) {
+                    this.y = this.baseY - Math.abs(Math.sin(this.pulse * 0.5)) * this.bounceHeight;
+                }
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x + this.width/2, this.y + this.height/2);
+                const s = 1 + Math.sin(this.pulse) * 0.1;
+                ctx.scale(s, s);
+                ctx.font = '55px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.shadowBlur = 20;
+                ctx.shadowColor = 'rgba(255, 0, 0, 0.6)';
+                ctx.fillText(this.emoji, 0, 0);
+                ctx.restore();
+            }
+        }
+
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x; this.y = y; this.color = color;
+                this.size = Math.random() * 6 + 2;
+                this.vx = (Math.random() - 0.5) * 12;
+                this.vy = (Math.random() - 0.5) * 12;
+                this.life = 1.0;
+                this.gravity = 0.2;
+            }
+            update() { this.x += this.vx; this.y += this.vy; this.vy += this.gravity; this.life -= 0.025; }
+            draw() { ctx.globalAlpha = this.life; ctx.fillStyle = this.color; ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1; }
+        }
+
+        class Shockwave {
+            constructor(x, y) {
+                this.x = x; this.y = y;
+                this.r = 10;
+                this.maxR = 250;
+                this.opacity = 1.0;
+            }
+            update() { this.r += 12; this.opacity -= 0.04; }
+            draw() {
+                ctx.save();
+                ctx.strokeStyle = `rgba(255,255,255,${this.opacity})`;
+                ctx.lineWidth = 4;
+                ctx.beginPath(); ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2); ctx.stroke();
+                ctx.restore();
+            }
+        }
+
+        let shockwaves = [];
+        function createShockwave(x, y) {
+            shockwaves.push(new Shockwave(x, y));
+            obstacles.forEach((o, i) => {
+                const dist = Math.abs(o.x - x);
+                if (dist < 200) {
+                    createParticles(o.x, o.y, '#E74C3C', 15);
+                    obstacles.splice(i, 1);
+                }
+            });
+        }
+
+        let layers = { stars: [], city: [], groundLines: 0 };
+
+        function initBackground() {
+            layers.stars = [];
+            for (let i = 0; i < 150; i++) layers.stars.push({ x: Math.random() * canvas.width, y: Math.random() * canvas.height * 0.6, s: Math.random() * 2, v: Math.random() * 0.3 + 0.1 });
+            layers.city = [];
+            for (let i = 0; i < 8; i++) layers.city.push({ x: i * 300, w: 200 + Math.random() * 200, h: 150 + Math.random() * 300, v: 0.5 });
+        }
+
+        function drawBackground() {
+            // Day/Night Cycle Logic
+            gameState.timeCycle = (gameState.distance * 0.0001) % (Math.PI * 2);
+            const cycleFactor = (Math.sin(gameState.timeCycle) + 1) / 2; // 0: Night, 1: Day
+            
+            // Sky Interpolation
+            const skyColors = {
+                nightTop: [4, 8, 6], nightBottom: [13, 27, 20],
+                dayTop: [135, 206, 235], dayBottom: [29, 158, 117] // Sky Blue to YoPRO Green
+            };
+
+            const lerp = (start, end, amt) => start + (end - start) * amt;
+            const r = lerp(skyColors.nightTop[0], skyColors.dayTop[0], cycleFactor);
+            const g = lerp(skyColors.nightTop[1], skyColors.dayTop[1], cycleFactor);
+            const b = lerp(skyColors.nightTop[2], skyColors.dayTop[2], cycleFactor);
+            const rB = lerp(skyColors.nightBottom[0], skyColors.dayBottom[0], cycleFactor);
+            const gB = lerp(skyColors.nightBottom[1], skyColors.dayBottom[1], cycleFactor);
+            const bB = lerp(skyColors.nightBottom[2], skyColors.dayBottom[2], cycleFactor);
+
+            const skyGrd = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            skyGrd.addColorStop(0, `rgb(${r},${g},${b})`);
+            skyGrd.addColorStop(1, `rgb(${rB},${gB},${bB})`);
+            ctx.fillStyle = skyGrd; ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Celestial Body (Sun/Moon)
+            const sunX = (gameState.timeCycle / (Math.PI * 2)) * canvas.width * 1.5 - canvas.width * 0.25;
+            const sunY = canvas.height * 0.4 - Math.sin(gameState.timeCycle) * (canvas.height * 0.3);
+            
+            ctx.save();
+            ctx.translate(sunX, sunY);
+            if (cycleFactor > 0.5) { // Sun
+                ctx.fillStyle = '#F1C40F';
+                ctx.shadowBlur = 40; ctx.shadowColor = '#F1C40F';
+                ctx.beginPath(); ctx.arc(0, 0, 40, 0, Math.PI * 2); ctx.fill();
+            } else { // Moon
+                ctx.fillStyle = '#ECF0F1';
+                ctx.shadowBlur = 20; ctx.shadowColor = '#ECF0F1';
+                ctx.beginPath(); ctx.arc(0, 0, 30, 0, Math.PI * 2); ctx.fill();
+            }
+            ctx.restore();
+
+            // Dynamic Track Color
+            gameState.trackHue = (160 + gameState.distance * 0.01) % 360;
+
+            // Speed Lines (Visual Velocity)
+            if (gameState.speed > 13) {
+                ctx.strokeStyle = `rgba(255,255,255,${0.1 + cycleFactor * 0.1})`;
+                ctx.lineWidth = 2;
+                for(let i=0; i<15; i++) {
+                    const y = (i * 70 + (gameState.distance * 2)) % canvas.height;
+                    ctx.beginPath(); ctx.moveTo(canvas.width, y); ctx.lineTo(canvas.width - 200, y); ctx.stroke();
+                }
+            }
+
+            if (gameState.burnoutMode) {
+                ctx.fillStyle = `rgba(231, 76, 60, ${0.1 + Math.sin(Date.now() / 100) * 0.05})`;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+
+            // Stars (Fade out during day)
+            ctx.fillStyle = `rgba(255,255,255,${0.4 * (1 - cycleFactor)})`;
+            layers.stars.forEach(s => { 
+                ctx.beginPath(); ctx.arc(s.x, s.y, s.s, 0, Math.PI * 2); ctx.fill(); 
+                s.x -= s.v * (gameState.speed / 5); if (s.x < 0) s.x = canvas.width; 
+            });
+
+            // Distant City (Parallax)
+            layers.city.forEach(b => {
+                const bCol = 10 + 20 * cycleFactor;
+                const bG = 20 + 30 * cycleFactor;
+                const bB = 15 + 25 * cycleFactor;
+                ctx.fillStyle = `rgba(${bCol}, ${bG}, ${bB}, 0.9)`;
+                
+                const groundY = canvas.height - 120;
+                
+                // Draw Building Body based on style
+                ctx.beginPath();
+                if (b.style === 'stepped') {
+                    ctx.moveTo(b.x, groundY);
+                    ctx.lineTo(b.x, groundY - b.h * 0.6);
+                    ctx.lineTo(b.x + b.w * 0.2, groundY - b.h * 0.6);
+                    ctx.lineTo(b.x + b.w * 0.2, groundY - b.h);
+                    ctx.lineTo(b.x + b.w * 0.8, groundY - b.h);
+                    ctx.lineTo(b.x + b.w * 0.8, groundY - b.h * 0.6);
+                    ctx.lineTo(b.x + b.w, groundY - b.h * 0.6);
+                    ctx.lineTo(b.x + b.w, groundY);
+                } else if (b.style === 'tower') {
+                    ctx.rect(b.x + b.w * 0.1, groundY - b.h, b.w * 0.8, b.h);
+                } else {
+                    ctx.rect(b.x, groundY - b.h, b.w, b.h);
+                }
+                ctx.fill();
+
+                // Rooftop Details
+                if (b.hasAntenna) {
+                    ctx.strokeStyle = `rgba(${bCol + 20}, ${bG + 20}, ${bB + 20}, 0.8)`;
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(b.x + b.w/2, groundY - b.h);
+                    ctx.lineTo(b.x + b.w/2, groundY - b.h - 40);
+                    ctx.stroke();
+                    if (cycleFactor < 0.4 && Math.random() > 0.9) { // Flashing red light
+                        ctx.fillStyle = '#ff4757';
+                        ctx.beginPath(); ctx.arc(b.x + b.w/2, groundY - b.h - 40, 3, 0, Math.PI * 2); ctx.fill();
+                    }
+                }
+
+                // Structured Windows
+                if (cycleFactor < 0.7) {
+                    const winOpacity = 0.4 * (1 - cycleFactor);
+                    ctx.fillStyle = `rgba(29, 158, 117, ${winOpacity})`;
+                    const rows = Math.floor(b.h / 25);
+                    const cols = Math.floor(b.w / 20);
+                    for(let r=1; r<rows-1; r++) {
+                        for(let c=1; c<cols-1; c++) {
+                            // Stable pseudo-random windows
+                            if (((r * c + b.windowSeed * 100) % 7) > 4) {
+                                ctx.fillRect(b.x + c * 20 + 5, groundY - b.h + r * 25 + 5, 8, 12);
+                            }
+                        }
+                    }
+                }
+
+                // Billboards
+                if (b.hasBillboard) {
+                    const bbW = b.w * 0.6;
+                    const bbH = 30;
+                    const bbX = b.x + (b.w - bbW)/2;
+                    const bbY = groundY - b.h * 0.8;
+                    ctx.fillStyle = '#111';
+                    ctx.fillRect(bbX - 2, bbY - 2, bbW + 4, bbH + 4);
+                    ctx.fillStyle = '#1D9E75';
+                    ctx.fillRect(bbX, bbY, bbW, bbH);
+                    if (cycleFactor < 0.8) {
+                        ctx.fillStyle = 'white';
+                        ctx.font = 'bold 12px Arial';
+                        ctx.textAlign = 'center';
+                        ctx.fillText('YoPRO', bbX + bbW/2, bbY + 20);
+                    }
+                }
+
+                b.x -= b.v * (gameState.speed / 5);
+                if (b.x + b.w < -100) {
+                    b.x = canvas.width + 100;
+                    b.h = 100 + Math.random() * 400; // Vary height on respawn
+                }
+            });
+
+            // Dynamic Ground
+            const groundGrd = ctx.createLinearGradient(0, canvas.height - 120, 0, canvas.height);
+            groundGrd.addColorStop(0, `hsl(${gameState.trackHue}, 70%, ${37 + 10 * cycleFactor}%)`);
+            groundGrd.addColorStop(1, `hsl(${gameState.trackHue}, 70%, ${15 + 5 * cycleFactor}%)`);
+            ctx.fillStyle = groundGrd; ctx.fillRect(0, canvas.height - 120, canvas.width, 120);
+
+            ctx.strokeStyle = `rgba(255,255,255,${0.2 + cycleFactor * 0.2})`;
+            ctx.lineWidth = 6; ctx.setLineDash([60, 60]); ctx.lineDashOffset = gameState.distance;
+            ctx.beginPath(); ctx.moveTo(0, canvas.height - 60); ctx.lineTo(canvas.width, canvas.height - 60); ctx.stroke(); ctx.setLineDash([]);
+            gameState.distance += gameState.speed;
+        }
+
+        let player;
+        let bottles = [];
+        let obstacles = [];
+        let particles = [];
+        let spawnTimer = 0;
+
+        function createParticles(x, y, color, count) { for (let i = 0; i < count; i++) particles.push(new Particle(x, y, color)); }
+
+        function spawn() {
+            spawnTimer++;
+            const baseInterval = Math.max(20, 75 - (gameState.score / 25));
+            const interval = gameState.burnoutMode ? baseInterval * 0.7 : baseInterval;
+            
+            if (spawnTimer > interval) {
+                if (Math.random() < 0.55) {
+                    bottles.push(new Bottle());
+                } else {
+                    // Complexity: Single, Double, or Triple Cluster
+                    obstacles.push(new Obstacle());
+                    if (gameState.score > 250 && Math.random() < 0.4) {
+                        obstacles.push(new Obstacle(140));
+                        if (gameState.score > 600 && Math.random() < 0.3) obstacles.push(new Obstacle(280));
+                    }
+                }
+                spawnTimer = 0;
+            }
+        }
+
+        function handleCollisions() {
+            bottles.forEach((bottle, index) => {
+                if (!bottle.collected && player.x < bottle.x + bottle.width && player.x + player.width > bottle.x && player.y < bottle.y + bottle.height && player.y + player.height > bottle.y) {
+                    bottle.collected = true;
+                    
+                    // Combo System
+                    if (gameState.lastFlavor === bottle.flavor.name) {
+                        gameState.combo++;
+                        gameState.score += 15 * gameState.combo;
+                        gameState.hyperRepair = 120; // 2 seconds of no drain
+                    } else {
+                        gameState.combo = 1;
+                    }
+                    gameState.lastFlavor = bottle.flavor.name;
+                    
+                    gameState.protein = Math.min(100, gameState.protein + CONFIG.bottleValue);
+                    createParticles(bottle.x + bottle.width/2, bottle.y + bottle.height/2, '#1D9E75', 25);
+                    bottles.splice(index, 1);
+                }
+            });
+
+            obstacles.forEach((obs, index) => {
+                if (player.invincible === 0 && player.x < obs.x + obs.width - 15 && player.x + player.width > obs.x + 15 && player.y < obs.y + obs.height - 15 && player.y + player.height > obs.y + 15) {
+                    gameState.protein -= CONFIG.damageValue;
+                    gameState.combo = 0;
+                    gameState.lastFlavor = null;
+                    player.invincible = 50;
+                    gameState.shake = 25;
+                    createParticles(player.x + player.width/2, player.y + player.height/2, '#E74C3C', 35);
+                    obstacles.splice(index, 1);
+                }
+            });
+        }
+
+        function updateHUD() {
+            scoreVal.textContent = Math.floor(gameState.score);
+            proteinBar.style.width = gameState.protein + '%';
+            proteinText.textContent = Math.floor(gameState.protein) + '%';
+            if (gameState.protein < 25) proteinBar.classList.add('bar-warning');
+            else proteinBar.classList.remove('bar-warning');
+
+            if (Math.floor(gameState.score / 100) > gameState.lastStreakScore) {
+                gameState.lastStreakScore = Math.floor(gameState.score / 100);
+                showStreak();
+            }
+        }
+
+        function showStreak() { streakPopup.classList.add('show-streak'); setTimeout(() => streakPopup.classList.remove('show-streak'), 1200); }
+
+        function gameLoop() {
+            if (!gameState.running) return;
+            ctx.save();
+            
+            // Chromatic Aberration effect during Burnout
+            if (gameState.burnoutMode) {
+                const shift = Math.sin(Date.now() / 50) * 3;
+                ctx.translate(shift, 0);
+            }
+
+            if (gameState.shake > 0) { ctx.translate((Math.random() - 0.5) * gameState.shake, (Math.random() - 0.5) * gameState.shake); gameState.shake *= 0.92; }
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Burnout Mode check
+            gameState.burnoutMode = gameState.protein < 20;
+            const currentDrain = gameState.hyperRepair > 0 ? 0 : CONFIG.drainRate * (1 + gameState.fatigue);
+            
+            gameState.score += gameState.burnoutMode ? 0.3 : 0.15;
+            const burnoutSpeed = gameState.burnoutMode ? 3 : 0;
+            gameState.speed = Math.min(CONFIG.maxSpeed, CONFIG.baseSpeed + (gameState.score * CONFIG.speedIncrease) + burnoutSpeed);
+            gameState.protein -= currentDrain;
+            gameState.fatigue = Math.min(1.0, gameState.score / 1800);
+
+            if (gameState.protein <= 0) { gameOver(); ctx.restore(); return; }
+
+            drawBackground(); spawn(); handleCollisions();
+            player.update(); player.draw();
+
+            // Shockwaves
+            shockwaves.forEach((s, i) => {
+                s.update();
+                s.draw();
+                if (s.opacity <= 0) shockwaves.splice(i, 1);
+            });
+
+            bottles.forEach((b, i) => { b.update(); b.draw(); if (b.x < -100) bottles.splice(i, 1); });
+            obstacles.forEach((o, i) => { o.update(); o.draw(); if (o.x < -100) obstacles.splice(i, 1); });
+            particles.forEach((p, i) => { p.update(); p.draw(); if (p.life <= 0) particles.splice(i, 1); });
+
+            updateHUD(); ctx.restore();
+            requestAnimationFrame(gameLoop);
+        }
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            if (player) player.y = canvas.height - 150;
+            initBackground();
+        }
+
+        function gameOver() {
+            gameState.running = false;
+            overlay.classList.remove('hidden');
+            
+            const finalScore = Math.floor(gameState.score);
+            let message = 'GAME OVER';
+            
+            // Sync to wallet and high scores
+            YoPRO.transaction(finalScore);
+            if (YoPRO.saveScore('rush', finalScore)) {
+                gameState.bestScore = finalScore;
+                message = 'NEW PERSONAL BEST!';
+                bestVal.textContent = finalScore;
+            }
+
+            document.getElementById('title-text').textContent = message;
+            document.getElementById('subtitle-text').textContent = 'Score: ' + finalScore + 'g Protein Gathered';
+            startBtn.textContent = 'RUN AGAIN';
+        }
+
+        function start() {
+            gameState.running = true;
+            gameState.score = 0;
+            gameState.protein = 60;
+            gameState.speed = CONFIG.baseSpeed;
+            gameState.lastStreakScore = 0;
+            gameState.shake = 0;
+            bottles = [];
+            obstacles = [];
+            particles = [];
+            player = new Player();
+            overlay.classList.add('hidden');
+            gameLoop();
+        }
+
+        window.addEventListener('resize', resize);
+        window.addEventListener('keydown', (e) => {
+            if (e.code === 'Space' || e.code === 'ArrowUp') {
+                if (gameState.running) player.jump();
+                else if (!overlay.classList.contains('hidden')) start();
+            }
+            if (e.code === 'ArrowDown' || e.code === 'KeyS') {
+                if (gameState.running) player.slam();
+            }
+        });
+
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (gameState.running) {
+                const now = Date.now();
+                if (now - lastTouch < 250) player.slam(); // Double tap to slam
+                else player.jump();
+                lastTouch = now;
+            }
+        });
+        let lastTouch = 0;
+
+        startBtn.addEventListener('click', start);
+
+        resize();
+        loadAssets();
+    </script>
+</body>
+</html>
