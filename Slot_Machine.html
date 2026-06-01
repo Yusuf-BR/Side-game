@@ -4,315 +4,608 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>YoPRO | Protein Slots</title>
-    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700&family=DM+Sans:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --yopro-green: #1D9E75;
-            --yopro-dark: #0D1B14;
-            --yopro-black: #050a08;
-            --yopro-amber: #EF9F27;
+            --accent: #00D2FF;
+            --accent-glow: rgba(0, 210, 255, 0.4);
+            --dark: #06100c;
+            --darker: #030a07;
             --white: #ffffff;
+            --silver: #e0e0e0;
         }
 
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
-            margin: 0;
             font-family: 'DM Sans', sans-serif;
-            background-color: var(--yopro-black);
+            background-color: var(--darker);
+            background-image: url('images/Cover_image.png');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
             color: var(--white);
             display: flex;
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
             overflow-x: hidden;
-        }
-
-        header {
             padding: 20px;
-            text-align: center;
+        }
+
+        /* ── SCANLINE OVERLAY ── */
+        .scanlines {
+            position: fixed;
+            inset: 0;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(0,0,0,0.05) 2px,
+                rgba(0,0,0,0.05) 4px
+            );
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        /* ── GLOBAL OVERLAY ── */
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(
+                to bottom,
+                rgba(3,10,7,0.1) 0%,
+                rgba(3,10,7,0.3) 50%,
+                rgba(3,10,7,0.6) 100%
+            );
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
             width: 100%;
-            background: linear-gradient(to bottom, var(--yopro-dark), var(--yopro-black));
-        }
-
-        .logo {
-            font-family: 'Bebas Neue', cursive;
-            font-size: 40px;
-            color: var(--yopro-green);
-            margin: 0;
-        }
-
-        .wallet-display {
-            background: rgba(29, 158, 117, 0.1);
-            border: 1px solid var(--yopro-green);
-            padding: 10px 25px;
-            border-radius: 30px;
-            font-family: 'Bebas Neue', cursive;
-            font-size: 24px;
-            margin: 20px 0;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .wallet-value { color: var(--yopro-amber); }
-
-        /* Slot Machine Styles */
-        .slot-machine {
-            background: #111;
-            padding: 30px;
-            border-radius: 20px;
-            border: 4px solid #333;
-            box-shadow: 0 0 50px rgba(0,0,0,0.5), 0 0 20px rgba(29, 158, 117, 0.2);
-            position: relative;
-            margin: 20px;
-        }
-
-        .reels {
-            display: flex;
-            gap: 15px;
-            background: #000;
-            padding: 15px;
-            border-radius: 10px;
-            border: 2px solid #222;
-        }
-
-        .reel {
-            width: 120px;
-            height: 120px;
-            background: var(--yopro-dark);
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 60px;
-            overflow: hidden;
-            position: relative;
-        }
-
-        .reel-content {
+            max-width: 1000px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            transition: transform 0.1s linear;
+            gap: 30px;
+            padding-top: 40px;
         }
 
-        .controls {
-            margin-top: 30px;
+        /* ── HEADER ── */
+        .header {
             text-align: center;
-        }
-
-        .bet-selector {
             margin-bottom: 20px;
         }
 
-        .bet-btn {
-            background: transparent;
-            border: 1px solid #444;
-            color: #888;
-            padding: 8px 20px;
-            margin: 0 5px;
-            border-radius: 20px;
-            cursor: pointer;
+        .page-title {
+            font-family: 'Bebas Neue', cursive;
+            font-size: clamp(40px, 8vw, 80px);
+            letter-spacing: 10px;
+            margin-bottom: 5px;
+            color: var(--white);
+            text-shadow: 0 0 30px var(--accent-glow);
+        }
+
+        /* ── HUB LINK ── */
+        .back-link {
+            position: absolute;
+            top: 0;
+            left: 0;
             font-family: 'Bebas Neue', cursive;
             font-size: 18px;
+            color: rgba(255,255,255,0.6);
+            text-decoration: none;
+            letter-spacing: 3px;
+            padding: 10px 25px;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.03);
+            backdrop-filter: blur(10px);
+            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+            border-radius: 4px;
+        }
+        .back-link:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: rgba(0, 210, 255, 0.1);
+            transform: translateX(5px);
+        }
+
+        /* ── WALLET ── */
+        .wallet-card {
+            background: rgba(6, 16, 12, 0.4);
+            border: 1px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(25px);
+            padding: 15px 50px;
+            border-radius: 50px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+        }
+
+        .wallet-label {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 10px;
+            letter-spacing: 5px;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.4);
+            margin-bottom: 2px;
+        }
+
+        .wallet-value {
+            font-family: 'Bebas Neue', cursive;
+            font-size: 42px;
+            color: var(--accent);
+            line-height: 1;
+            text-shadow: 0 0 20px var(--accent-glow);
+        }
+
+        /* ── SLOT MACHINE ── */
+        .slot-machine {
+            background: rgba(6, 16, 12, 0.7);
+            border: 1px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(35px);
+            padding: 60px 40px;
+            border-radius: 12px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: 0 50px 120px rgba(0,0,0,0.8), 0 0 50px rgba(0, 210, 255, 0.15);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .slot-machine::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 1px;
+            background: linear-gradient(90deg, transparent, var(--accent), transparent);
+        }
+
+        .reels-container {
+            display: flex;
+            gap: 25px;
+            margin-bottom: 50px;
+            padding: 30px;
+            background: rgba(0,0,0,0.4);
+            border-radius: 6px;
+            border: 1px solid rgba(255,255,255,0.03);
+            height: 220px;
+            position: relative;
+        }
+
+        /* Win Line */
+        .reels-container::after {
+            content: '';
+            position: absolute;
+            top: 50%; left: 0; width: 100%; height: 2px;
+            background: rgba(0, 210, 255, 0.2);
+            box-shadow: 0 0 15px var(--accent-glow);
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        .reel {
+            width: 160px;
+            height: 160px;
+            background: rgba(255,255,255,0.02);
+            border-radius: 4px;
+            border: 1px solid rgba(255,255,255,0.06);
+            position: relative;
+            overflow: hidden;
+            box-shadow: inset 0 0 30px rgba(0,0,0,0.5);
+        }
+
+        .reel-strip {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: absolute;
+            width: 100%;
+            top: 0;
+            left: 0;
+        }
+
+        .slot-item {
+            width: 160px;
+            height: 160px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 30px;
+        }
+
+        .slot-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            filter: drop-shadow(0 0 15px rgba(0,0,0,0.6));
+        }
+
+        /* ── CONTROLS ── */
+        .controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 40px;
+            width: 100%;
+        }
+
+        .bet-selector {
+            display: flex;
+            gap: 20px;
+        }
+
+        .bet-btn {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.5);
+            padding: 12px 35px;
+            font-family: 'Bebas Neue', cursive;
+            font-size: 24px;
+            letter-spacing: 3px;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+            border-radius: 4px;
+        }
+
+        .bet-btn:hover {
+            color: var(--white);
+            border-color: rgba(255,255,255,0.3);
+            background: rgba(255,255,255,0.06);
         }
 
         .bet-btn.active {
-            border-color: var(--yopro-amber);
-            color: var(--yopro-amber);
-            background: rgba(239, 159, 39, 0.1);
+            border-color: var(--accent);
+            color: var(--accent);
+            background: rgba(0, 210, 255, 0.1);
+            box-shadow: 0 0 25px var(--accent-glow);
+            transform: translateY(-2px);
         }
 
         .spin-btn {
-            background: var(--yopro-green);
-            color: white;
+            background: var(--accent);
+            color: #000;
             border: none;
-            padding: 15px 60px;
+            padding: 24px 100px;
             font-family: 'Bebas Neue', cursive;
-            font-size: 32px;
-            border-radius: 8px;
+            font-size: 40px;
+            letter-spacing: 6px;
             cursor: pointer;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+            border-radius: 4px;
+            box-shadow: 0 15px 50px rgba(0, 210, 255, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .spin-btn::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.6s;
+        }
+
+        .spin-btn:hover:not(:disabled)::after {
+            transform: translateX(100%);
+        }
+
+        .spin-btn:hover:not(:disabled) {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 20px 70px rgba(0, 210, 255, 0.5);
+        }
+
+        .spin-btn:disabled {
+            background: rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.2);
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        /* ── RESULT ── */
+        .result-msg {
+            height: 70px;
+            font-family: 'Bebas Neue', cursive;
+            font-size: 48px;
+            letter-spacing: 4px;
+            color: var(--white);
+            text-align: center;
             transition: all 0.3s;
         }
 
-        .spin-btn:hover { background: #25c08f; transform: translateY(-3px); }
-        .spin-btn:disabled { background: #333; cursor: not-allowed; transform: none; box-shadow: none; }
-
-        .result-msg {
-            font-family: 'Bebas Neue', cursive;
-            font-size: 40px;
-            margin-top: 20px;
-            height: 50px;
-            color: var(--yopro-amber);
-            text-shadow: 0 0 20px rgba(239, 159, 39, 0.5);
+        .win-glow {
+            text-shadow: 0 0 40px var(--accent), 0 0 80px var(--accent);
+            animation: winPulse 1s infinite alternate;
         }
 
+        @keyframes winPulse {
+            from { transform: scale(1); }
+            to { transform: scale(1.05); }
+        }
+
+        /* ── PRIZE TABLE ── */
         .prize-table {
-            margin-top: 40px;
-            background: rgba(255,255,255,0.05);
-            padding: 20px;
-            border-radius: 12px;
             width: 100%;
-            max-width: 400px;
-        }
-
-        .prize-row {
+            background: rgba(6, 16, 12, 0.4);
+            border: 1px solid rgba(255,255,255,0.05);
+            backdrop-filter: blur(15px);
+            padding: 30px;
+            border-radius: 4px;
             display: flex;
-            justify-content: space-between;
-            margin-bottom: 10px;
-            font-size: 14px;
-            color: #aaa;
+            justify-content: space-around;
+            gap: 20px;
         }
 
-        .prize-row span:last-child { color: var(--white); font-weight: bold; }
+        .prize-item {
+            text-align: center;
+        }
 
-        .back-btn {
-            margin: 30px;
-            color: #555;
-            text-decoration: none;
-            font-size: 14px;
+        .prize-label {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 11px;
+            letter-spacing: 4px;
             text-transform: uppercase;
-            letter-spacing: 2px;
+            color: rgba(255,255,255,0.3);
+            margin-bottom: 8px;
         }
 
-        .back-btn:hover { color: var(--yopro-green); }
-
-        /* Animations */
-        @keyframes blur {
-            0% { filter: blur(0); }
-            50% { filter: blur(10px); }
-            100% { filter: blur(0); }
+        .prize-value {
+            font-family: 'Bebas Neue', cursive;
+            font-size: 28px;
+            color: var(--white);
+            opacity: 0.8;
         }
 
-        .spinning { animation: blur 0.2s infinite; }
+        /* ── ANIMATIONS ── */
+        @keyframes spinBlur {
+            from { filter: blur(2px) brightness(1.2); }
+            to { filter: blur(12px) brightness(0.8); }
+        }
+        .spinning {
+            animation: spinBlur 0.1s infinite alternate;
+        }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 650px) {
+            .reels-container { gap: 10px; padding: 15px; height: 160px; }
+            .reel { width: 100px; height: 100px; }
+            .slot-item { width: 100px; height: 100px; padding: 15px; }
+            .bet-selector { flex-wrap: wrap; justify-content: center; }
+            .spin-btn { width: 100%; padding: 20px; }
+        }
     </style>
 </head>
 <body>
 
-    <header>
-        <h1 class="logo">YO<span>PRO</span> PROTEIN SLOTS</h1>
-    </header>
+    <div class="scanlines"></div>
 
-    <div class="wallet-display">
-        AVAILABLE PROTEIN: <span class="wallet-value" id="wallet-balance">0g</span>
-    </div>
+    <div class="container">
+        <a href="index.html" class="back-link">← HUB</a>
 
-    <div class="slot-machine">
-        <div class="reels">
-            <div class="reel"><div class="reel-content" id="reel-1">🥤</div></div>
-            <div class="reel"><div class="reel-content" id="reel-2">🥤</div></div>
-            <div class="reel"><div class="reel-content" id="reel-3">🥤</div></div>
+        <div class="header">
+            <h1 class="page-title">HIGH GAINS SLOTS</h1>
         </div>
 
-        <div class="controls">
-            <div class="bet-selector">
-                <button class="bet-btn active" onclick="setBet(10)">BET 10g</button>
-                <button class="bet-btn" onclick="setBet(25)">BET 25g</button>
-                <button class="bet-btn" onclick="setBet(50)">BET 50g</button>
+        <div class="wallet-card">
+            <span class="wallet-label">Your Protein Stash</span>
+            <span class="wallet-value" id="wallet-balance">0g</span>
+        </div>
+
+        <div class="slot-machine">
+            <div class="reels-container">
+                <div class="reel"><div class="reel-strip" id="reel-0"></div></div>
+                <div class="reel"><div class="reel-strip" id="reel-1"></div></div>
+                <div class="reel"><div class="reel-strip" id="reel-2"></div></div>
             </div>
-            <button class="spin-btn" id="spin-button" onclick="spin()">SPIN</button>
+
+            <div class="controls">
+                <div class="bet-selector">
+                    <button class="bet-btn active" data-bet="25">BET 25</button>
+                    <button class="bet-btn" data-bet="100">BET 100</button>
+                    <button class="bet-btn" data-bet="250">BET 250</button>
+                </div>
+                <button class="spin-btn" id="spin-button">SPIN REELS</button>
+            </div>
+            
+            <div class="result-msg" id="result-text"></div>
         </div>
-        
-        <div class="result-msg" id="result-text"></div>
-    </div>
 
-    <div class="prize-table">
-        <div class="prize-row"><span>3x YoPRO 🥤</span> <span>10x WAGER</span></div>
-        <div class="prize-row"><span>3x Weights 🏋️</span> <span>5x WAGER</span></div>
-        <div class="prize-row"><span>3x Energy ⚡</span> <span>3x WAGER</span></div>
-        <div class="prize-row"><span>2x YoPRO 🥤</span> <span>2x WAGER</span></div>
+        <div class="prize-table">
+            <div class="prize-item">
+                <div class="prize-label">Jackpot</div>
+                <div class="prize-value">10X PAYOUT</div>
+            </div>
+            <div class="prize-item">
+                <div class="prize-label">Double</div>
+                <div class="prize-value">4X PAYOUT</div>
+            </div>
+            <div class="prize-item">
+                <div class="prize-label">Mixed YoPRO</div>
+                <div class="prize-value">2X PAYOUT</div>
+            </div>
+        </div>
     </div>
-
-    <a href="index.html" class="back-btn">Back to Hub</a>
 
     <script src="js/yopro-api.js"></script>
     <script>
-        const symbols = ['🥤', '🏋️', '⚡', '🍏', '🥜', '🍔'];
-        const weights = [0.15, 0.15, 0.2, 0.2, 0.2, 0.1]; // Probability weights
-        let currentBet = 10;
+        const SYMBOLS = [
+            { id: 'nature', img: 'images/Nature reward.png', weight: 15 },
+            { id: 'choc', img: 'images/Chocolate reward.png', weight: 15 },
+            { id: 'vanilla', img: 'images/Vanilla reward.png', weight: 20 },
+            { id: 'strawberry', img: 'images/Strawberry reward.png', weight: 20 },
+            { id: 'caramel', img: 'images/Caramel reward.png', weight: 20 },
+            { id: 'burger', img: 'images/ennemies/burger.png', weight: 5 },
+            { id: 'pizza', img: 'images/ennemies/Pizza.png', weight: 5 }
+        ];
+
+        const STRIP_SIZE = 30; 
+        let currentBet = 25;
         let isSpinning = false;
+        
+        const reelStrips = [
+            document.getElementById('reel-0'),
+            document.getElementById('reel-1'),
+            document.getElementById('reel-2')
+        ];
+
+        function initReels() {
+            reelStrips.forEach(strip => {
+                strip.innerHTML = '';
+                for (let i = 0; i < STRIP_SIZE; i++) {
+                    const symbol = SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
+                    strip.appendChild(createSlotItem(symbol));
+                }
+            });
+        }
+
+        function createSlotItem(symbol) {
+            const div = document.createElement('div');
+            div.className = 'slot-item';
+            div.dataset.id = symbol.id;
+            const img = document.createElement('img');
+            img.src = symbol.img;
+            div.appendChild(img);
+            return div;
+        }
 
         function updateBalance() {
             document.getElementById('wallet-balance').textContent = YoPRO.getBalance() + 'g';
         }
 
-        function setBet(amount) {
-            if (isSpinning) return;
-            currentBet = amount;
-            document.querySelectorAll('.bet-btn').forEach(btn => {
-                btn.classList.toggle('active', btn.textContent.includes(amount + 'g'));
+        document.querySelectorAll('.bet-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (isSpinning) return;
+                currentBet = parseInt(btn.dataset.bet);
+                document.querySelectorAll('.bet-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
             });
-        }
-
-        function getRandomSymbol() {
-            const r = Math.random();
-            let sum = 0;
-            for (let i = 0; i < weights.length; i++) {
-                sum += weights[i];
-                if (r <= sum) return symbols[i];
-            }
-            return symbols[symbols.length - 1];
-        }
+        });
 
         async function spin() {
             if (isSpinning) return;
             
             if (!YoPRO.transaction(-currentBet)) {
-                document.getElementById('result-text').textContent = "NEED MORE PROTEIN!";
+                document.getElementById('result-text').textContent = "INSUFFICIENT PROTEIN";
                 return;
             }
 
             isSpinning = true;
             updateBalance();
             document.getElementById('spin-button').disabled = true;
-            document.getElementById('result-text').textContent = "";
+            const resultDisplay = document.getElementById('result-text');
+            resultDisplay.textContent = "";
+            resultDisplay.classList.remove('win-glow');
 
-            const finalSymbols = [getRandomSymbol(), getRandomSymbol(), getRandomSymbol()];
-            const reelEls = [document.getElementById('reel-1'), document.getElementById('reel-2'), document.getElementById('reel-3')];
-
-            // Start spinning animation
-            reelEls.forEach(el => el.classList.add('spinning'));
-
-            // Stop reels one by one
-            for (let i = 0; i < 3; i++) {
-                await new Promise(r => setTimeout(r, 600 + i * 400));
-                reelEls[i].classList.remove('spinning');
-                reelEls[i].textContent = finalSymbols[i];
+            // LUCK ENGINE: Increase odds of winning
+            let finalSymbolIds = [];
+            const winRoll = Math.random();
+            
+            if (winRoll < 0.35) { // 35% chance to force a Triple win
+                const winSymbol = SYMBOLS[Math.floor(Math.random() * 5)].id; // Force a YoPRO match
+                finalSymbolIds = [winSymbol, winSymbol, winSymbol];
+            } else if (winRoll < 0.65) { // 30% chance to force a Double win
+                const winSymbol = SYMBOLS[Math.floor(Math.random() * 5)].id;
+                finalSymbolIds = [winSymbol, winSymbol, SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)].id];
+            } else {
+                finalSymbolIds = [getRandomSymbol(), getRandomSymbol(), getRandomSymbol()];
             }
 
-            checkWin(finalSymbols);
+            const spinPromises = reelStrips.map((strip, i) => animateReel(i, finalSymbolIds[i]));
+            await Promise.all(spinPromises);
+            
+            checkWin(finalSymbolIds);
             isSpinning = false;
             document.getElementById('spin-button').disabled = false;
+        }
+
+        function getRandomSymbol() {
+            const totalWeight = SYMBOLS.reduce((sum, s) => sum + s.weight, 0);
+            let r = Math.random() * totalWeight;
+            for (const s of SYMBOLS) {
+                if (r < s.weight) return s.id;
+                r -= s.weight;
+            }
+            return SYMBOLS[0].id;
+        }
+
+        function animateReel(reelIndex, targetId) {
+            return new Promise(resolve => {
+                const strip = reelStrips[reelIndex];
+                const reelHeight = 160; 
+                const totalMove = (STRIP_SIZE - 1) * reelHeight;
+                const targetSymbol = SYMBOLS.find(s => s.id === targetId);
+                
+                strip.classList.add('spinning');
+                const duration = 1800 + (reelIndex * 500);
+                const startTime = performance.now();
+
+                function step(timestamp) {
+                    const elapsed = timestamp - startTime;
+                    const progress = Math.min(elapsed / duration, 1);
+                    const easedProgress = 1 - Math.pow(1 - progress, 4); // Smoother cubic ease-out
+                    const currentY = -(easedProgress * totalMove);
+                    
+                    strip.style.transform = `translateY(${currentY}px)`;
+
+                    if (progress < 1) {
+                        requestAnimationFrame(step);
+                    } else {
+                        strip.classList.remove('spinning');
+                        const items = strip.querySelectorAll('.slot-item');
+                        const lastItem = items[items.length - 1];
+                        lastItem.dataset.id = targetSymbol.id;
+                        lastItem.querySelector('img').src = targetSymbol.img;
+                        strip.style.transform = `translateY(${-totalMove}px)`;
+                        resolve(targetId);
+                    }
+                }
+                requestAnimationFrame(step);
+            });
         }
 
         function checkWin(res) {
             let winAmount = 0;
             let msg = "";
+            const resDisplay = document.getElementById('result-text');
 
-            if (res[0] === res[1] && res[1] === res[2]) {
-                if (res[0] === '🥤') winAmount = currentBet * 10;
-                else if (res[0] === '🏋️') winAmount = currentBet * 5;
-                else if (res[0] === '⚡') winAmount = currentBet * 3;
-                else if (res[0] !== '🍔') winAmount = currentBet * 2;
-                msg = winAmount > 0 ? "BIG GAINS! +" + winAmount + "g" : "NO GAINS THIS TIME";
-            } else if ((res[0] === '🥤' && res[1] === '🥤') || (res[1] === '🥤' && res[2] === '🥤')) {
+            const unique = [...new Set(res)];
+            const isTriple = unique.length === 1;
+            const isDouble = unique.length === 2;
+            const hasJunk = res.some(id => ['burger', 'pizza'].includes(id));
+
+            if (isTriple && !hasJunk) {
+                winAmount = currentBet * 10;
+                msg = "JACKPOT! +" + winAmount + "g";
+                resDisplay.classList.add('win-glow');
+            } else if (isDouble && !hasJunk) {
+                winAmount = currentBet * 4;
+                msg = "DOUBLE GAINS! +" + winAmount + "g";
+            } else if (!hasJunk && res.every(id => !['burger', 'pizza'].includes(id))) {
                 winAmount = currentBet * 2;
-                msg = "DOUBLE FUEL! +" + winAmount + "g";
-            } else if (res.includes('🍔')) {
-                msg = "JUNK FOOD LOSS";
+                msg = "MIXED FUEL! +" + winAmount + "g";
+            } else if (hasJunk) {
+                msg = "JUNK FOOD CRASH";
             } else {
-                msg = "KEEP RUNNING!";
+                msg = "KEEP SPINNING";
             }
 
             if (winAmount > 0) {
                 YoPRO.transaction(winAmount);
-                YoPRO.saveScore('slots', winAmount); // Track biggest win as high score
+                YoPRO.saveScore('slots', winAmount);
                 updateBalance();
             }
-            document.getElementById('result-text').textContent = msg;
+            resDisplay.textContent = msg;
         }
 
-        window.onload = updateBalance;
+        document.getElementById('spin-button').addEventListener('click', spin);
+        window.onload = () => { updateBalance(); initReels(); };
     </script>
 </body>
 </html>
